@@ -13,15 +13,15 @@ from textblob import TextBlob
 import gradio as gr
 
 # Load the dataset
-df = pd.read_csv("/workspaces/NLP-Finalproject/swahili.csv")
+df = pd.read_csv("IMDB Dataset.csv")
 df.head
 
 # Text preprocessing
-stop_words = stopwords.words("swahili")
-df["maneno"] = df["maneno"].apply(lambda x: " ".join([word for word in re.sub('[^a-zA-Z0-9\s]', '', x).split() if word not in stop_words]))
+stop_words = stopwords.words("english")
+df["text"] = df["text"].apply(lambda x: " ".join([word for word in re.sub('[^a-zA-Z0-9\s]', '', x).split() if word not in stop_words]))
 
 # Split dataset into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(df["maneno"], df["lugha"], test_size=0.3, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(df["text"], df["sentiment"], test_size=0.3, random_state=42)
 
 # Vectorize the text data using TF-IDF
 vectorizer = TfidfVectorizer()
@@ -37,10 +37,10 @@ y_pred = svm.predict(X_test_vec)
 accuracy = accuracy_score(y_test, y_pred)
 precision, recall, f1_score, _ = precision_recall_fscore_support(y_test, y_pred, average='weighted')
 
-print(f"Results for swahili.csv")
+print(f"Results for IMDB Dataset.csv")
 print(f"Accuracy: {accuracy:.2f}")
 print(f"F1 Score: {f1_score:.2f}")
-print(f"Polarity: {TextBlob(' '.join(df['maneno'])).sentiment.polarity:.2f}")
+print(f"Polarity: {TextBlob(' '.join(df['text'])).sentiment.polarity:.2f}")
 
 def predict_sentiment(text):
     # Preprocess the input text
@@ -53,21 +53,21 @@ def predict_sentiment(text):
 
 def predict_sentimentcsv(data):
     # Preprocess the new data
-    data["maneno"] = data["maneno"].apply(lambda x: " ".join([word for word in re.sub('[^a-zA-Z0-9\s]', '', x).split() if word not in stop_words]))
+    data["text"] = data["text"].apply(lambda x: " ".join([word for word in re.sub('[^a-zA-Z0-9\s]', '', x).split() if word not in stop_words]))
 
     # Vectorize the new data
-    new_data_vec = vectorizer.transform(data["maneno"])
+    new_data_vec = vectorizer.transform(data["text"])
 
     # Predict the sentiment of the new data
     sentiment = svm.predict(new_data_vec)
 
     # Calculate the polarity scores of the new data
-    new_data_polarity = [TextBlob(text).sentiment.polarity for text in data["maneno"]]
+    new_data_polarity = [TextBlob(text).sentiment.polarity for text in data["text"]]
 
     # Calculate the precision, recall, F1 score, and support for the new data
-    precision_new, recall_new, f1_score_new, support_new = precision_recall_fscore_support(sentiment, data["lugha"], average='weighted')
+    precision_new, recall_new, f1_score_new, support_new = precision_recall_fscore_support(sentiment, data["sentiment"], average='weighted')
 
     # Calculate the accuracy for the new data
-    accuracy_new = accuracy_score(data["lugha"], sentiment)*100
+    accuracy_new = accuracy_score(data["sentiment"], sentiment)*100
 
     return sentiment, new_data_polarity, precision_new, recall_new, f1_score_new, support_new, accuracy_new
